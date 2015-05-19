@@ -4,7 +4,7 @@ Little Lews compiles all your Less files and and keeps track of their @imports
 ## Features
 * Compiles all Less files that imports the changed Less file
 * Gulp-support
-* Experimental
+* Experimental socket-support - compiles filename sent through a socket. This is useful when working over NFS.
 
 ## Usage examples
 Cli:
@@ -26,7 +26,7 @@ gulp.task('dev', function() {
 });
 ```
 
-With Vim: (useful then working over NFS)
+With sockets and Vim: (useful then working over NFS)
 ```bash
 lews --use-socket /srv/www/testsite/lews.sock --no-watch /srv/www/testsite/css /srv/www/testsite/public/css
 ```
