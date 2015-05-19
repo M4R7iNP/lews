@@ -1,0 +1,24 @@
+{
+  "name": "lews",
+  "version": "1.0.0",
+  "description": "Watches and compiles less",
+  "main": "lews.js",
+  "bin": {
+    "lews": "./bin.js"
+  },
+  "dependencies": {
+    "async": "^0.9.0",
+    "colors": "^1.0.3",
+    "glob": "^5.0.5",
+    "less": "^2.4.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Martin Pedersen",
+  "license": "GNU GPL v2.0",
+  "optionalDependencies": {
+    "chokidar": "^1.0.1"
+  }
+}
