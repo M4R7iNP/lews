@@ -37,7 +37,7 @@ for (var i = 2; i < process.argv.length; i++) {
         process.exit(1);
         break;
     case 'no-watch':
-        programOptions.watch = false;
+        programOptions.noWatch = true;
         break;
     case 'use-socket':
         try {
