@@ -141,7 +141,7 @@ Lews.prototype.recompileFile = function(relativeFilename, callback) {
     // Add files that imports added files recursively
     for (var i = 0; i < files.length; i++)
         if (this.importMap[files[i]])
-            for (var j = 0, file = this.importMap[files[i]][j]; j < this.importMap[files[i]].length; file = this.importMap[++j])
+            for (var j = 0, file = this.importMap[files[i]][j]; j < this.importMap[files[i]].length; file = this.importMap[files[i]][++j])
                 if (file && files.indexOf(file) === -1)
                     files.push(file);
 
