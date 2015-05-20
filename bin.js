@@ -31,8 +31,9 @@ for (var i = 2; i < process.argv.length; i++) {
             'Usage: node ' + process.argv[1] + ' [options] sourcePath [destPath]',
             '    --no-source-map: dont inline source maps',
             '    --use-socket [socketPath]: listen on socket for files to compile (see README)',
-            '    --no-watch: don\'t watch for file changes (use this if filesystem is over NFS)',
-            '    --help: this help message'
+            '    --no-watch: don\'t watch for file changes',
+            '    --watch-interval interval: specify watch interval',
+            '    --help / --usage: this help message'
         ].join('\n\r'));
         process.exit(1);
         break;
@@ -51,6 +52,9 @@ for (var i = 2; i < process.argv.length; i++) {
             }
         } catch (err) {
         }
+        break;
+    case 'watch-interval':
+        lewsOptions.watchInterval = parseInt(process.argv[++i]);
         break;
     default:
         if (!programOptions.srcPath) {

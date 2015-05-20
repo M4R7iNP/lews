@@ -22,6 +22,7 @@ var Lews = function(srcPath, destPath, options) {
     this.srcPath = path.resolve(srcPath);
     this.destPath = path.resolve(destPath);
     this.debug = !!options.debug;
+    this.watchInterval = options.watchInterval || 1000;
 
     this.options = options || {
         aetherDebugBarError: true
@@ -38,12 +39,12 @@ var Lews = function(srcPath, destPath, options) {
     glob(
         this.srcPath + '/**/*.less',
         {
-            dot: false,
-            nodir: true
+            nodir: false
         },
         function(err, files) {
             if (err)
                 console.error(err);
+
             async.eachLimit(
                 files,
                 4,
@@ -107,7 +108,7 @@ Lews.prototype.watch = function() {
     .watch(this.srcPath, {
         ignored: /[\/\\]\./,
         usePolling: true,
-        interval: 1000,
+        interval: self.watchInterval || 1000,
         persistent: true
     })
     .on('ready', function() {
@@ -120,7 +121,7 @@ Lews.prototype.watch = function() {
         var relativeFilename = path.relative(self.srcPath, filename);
         console.log('File changed', relativeFilename);
         if (self.lastModified[relativeFilename] &&
-            Date.now() - self.lastModified[relativeFilename] < 1100)
+            Date.now() - self.lastModified[relativeFilename] < (self.watchInterval + 200))
                 return console.log(('Not recompiling ' + relativeFilename).yellow);
 
         self.recompileFile(relativeFilename);
