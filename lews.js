@@ -32,22 +32,35 @@ var Lews = function(srcPath, destPath, options) {
 
     var self = this;
 
+    console.log('Lews: Building initial import map');
+
     // Create initial import map
-    glob(this.srcPath + '/**/*.less', function(err, files) {
-        async.eachLimit(
-            files,
-            4,
-            self.findImports.bind(self),
-            function(err) {
-                if(err) {
-                    console.error(err);
-                    process.exit(1);
+    glob(
+        this.srcPath + '/**/*.less',
+        {
+            dot: false,
+            nodir: true
+        },
+        function(err, files) {
+            if (err)
+                console.error(err);
+            async.eachLimit(
+                files,
+                4,
+                self.findImports.bind(self),
+                function(err) {
+                    if(err) {
+                        console.error(err);
+                        process.exit(1);
+                    }
+                    if (self.debug)
+                        console.log(self.importMap);
+
+                    console.log('Lews: Import map is built');
                 }
-                if (self.debug)
-                    console.log(self.importMap);
-            }
-        );
-    });
+            );
+        }
+    );
 };
 
 var importRegex = /@import[^'";]*['"]([^'";]+)['"];/;
@@ -89,6 +102,7 @@ Lews.prototype.watch = function() {
         });
     });
    */
+    this.chokidarWatcher =
     require('chokidar')
     .watch(this.srcPath, {
         ignored: /[\/\\]\./,
@@ -100,6 +114,9 @@ Lews.prototype.watch = function() {
         console.log('Monitoring files');
     })
     .on('change', function(filename) {
+        if (self.debug)
+            console.log('Got chokidar change:', filename);
+
         var relativeFilename = path.relative(self.srcPath, filename);
         console.log('File changed', relativeFilename);
         if (self.lastModified[relativeFilename] &&
