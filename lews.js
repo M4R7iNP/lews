@@ -159,6 +159,9 @@ Lews.prototype.recompileFile = function(relativeFilename, callback) {
             var inFile = path.join(self.srcPath, lessFilename),
                 outFile = path.join(self.destPath, lessFilename.replace(/\.less$/, '.css'));
 
+            if (self.debug)
+                console.log('Begun to recompile', inFile);
+
             fs.readFile(inFile, 'utf8', function(err, data) {
                 if (err)
                     return cb(err);
@@ -200,7 +203,7 @@ Lews.prototype.recompileFile = function(relativeFilename, callback) {
                     fs.writeFile(outFile, result.css, function(err) {
                         self.lastModified[lessFilename] = Date.now();
                         if (err && err.code == 'ENOENT') // Directory does not exist
-                            fs.mkdir(path.dirname(outFile),  fs.writeFile.bind(this, outFile, result.css, cb));
+                            require('mkdirp')(path.dirname(outFile),  fs.writeFile.bind(this, outFile, result.css, cb));
                         else
                             cb(err);
                     });
