@@ -50,10 +50,11 @@ var Lews = function(srcPath, destPath, options) {
                 4,
                 self.findImports.bind(self),
                 function(err) {
-                    if(err) {
+                    if (err) {
                         console.error(err);
                         process.exit(1);
                     }
+
                     if (self.debug)
                         console.log(self.importMap);
 
@@ -166,7 +167,16 @@ Lews.prototype.recompileFile = function(relativeFilename, callback) {
                 if (err)
                     return cb(err);
 
+                var inFileDir = path.dirname(inFile);
+
                 var lessOptions = {
+                    rootFileInfo: {
+                        filename: path.basename(inFile),
+                        rootpath: self.srcPath,
+                        currentDirectory: inFileDir,
+                        entryPath: inFileDir,
+                        rootFilename: path.basename(relativeFilename),
+                    },
                     paths: [path.dirname(inFile)],
                     sourceMap: {
                         sourceMapFileInline: !self.options.noSourceMap
