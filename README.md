@@ -13,7 +13,7 @@ bundle.less
 ```
 
 Say you edit `helpers.less`, Lews will compile `helpers.less`, `buttons.less` and `bundle.less`.
-Should you edit `icons.less`, Lews will compile `icons.less`, `fonts.less` and `bundle.less.`
+Should you edit `icons.less`, Lews will compile `icons.less`, `fonts.less` and `bundle.less`.
 
 Pretty neat, right?
 

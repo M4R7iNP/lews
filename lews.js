@@ -161,7 +161,7 @@ Lews.prototype.recompileFile = function(relativeFilename, callback) {
                 outFile = path.join(self.destPath, lessFilename.replace(/\.less$/, '.css'));
 
             if (self.debug)
-                console.log('Begun to recompile', inFile);
+                console.log('Began to recompile', inFile);
 
             fs.readFile(inFile, 'utf8', function(err, data) {
                 if (err)
@@ -170,6 +170,7 @@ Lews.prototype.recompileFile = function(relativeFilename, callback) {
                 var inFileDir = path.dirname(inFile);
 
                 var lessOptions = {
+                    compress: true,
                     rootFileInfo: {
                         filename: path.basename(inFile),
                         rootpath: self.srcPath,
@@ -178,6 +179,7 @@ Lews.prototype.recompileFile = function(relativeFilename, callback) {
                         rootFilename: path.basename(relativeFilename),
                     },
                     paths: [path.dirname(inFile)],
+                    plugins: self.options.lessPlugins,
                     sourceMap: {
                         sourceMapFileInline: !self.options.noSourceMap
                     }
@@ -254,7 +256,7 @@ Lews.prototype.createSocket = function(socketPath) {
             console.log(body);
             var relativePath = path.relative(self.srcPath, body);
             if (relativePath.substr(0, 3) != '../')
-                self.recompileFile(relativePath);
+                process.nextTick(self.recompileFile.bind(self, relativePath));
         });
     });
 
