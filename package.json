@@ -10,7 +10,7 @@
     "async": "^1.2.1",
     "chokidar": "^1.0.3",
     "colors": "^1.0.3",
-    "glob": "^5.0.5",
+    "glob": "^5.0.12",
     "less": "^2.5.1",
     "mkdirp": "^0.5.1"
   },
@@ -19,8 +19,19 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Martin Pedersen",
-  "license": "GNU GPL v2.0",
-  "optionalDependencies": {
-    "chokidar": "^1.0.1"
-  }
+  "license": "GPL-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/M4R7iNP/lews.git"
+  },
+  "keywords": [
+    "less",
+    "imports",
+    "depencies",
+    "lews"
+  ],
+  "bugs": {
+    "url": "https://github.com/M4R7iNP/lews/issues"
+  },
+  "homepage": "https://github.com/M4R7iNP/lews#readme"
 }
