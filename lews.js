@@ -104,6 +104,7 @@ Lews.prototype.watch = function() {
         });
     });
    */
+    /*
     this.chokidarWatcher =
     require('chokidar')
     .watch(this.srcPath, {
@@ -124,6 +125,29 @@ Lews.prototype.watch = function() {
         if (self.lastModified[relativeFilename] &&
             Date.now() - self.lastModified[relativeFilename] < (self.watchInterval + 200))
                 return console.log(('Not recompiling ' + relativeFilename).yellow);
+
+        self.recompileFile(relativeFilename);
+    });
+    */
+
+    var Gaze = require('gaze');
+    this.gaze = new Gaze('**/*.less', {
+        cwd: this.srcPath,
+        interval: 2000
+    });
+
+    this.gaze.on('ready', function(watcher) {
+        console.log('Monitoring files');
+    });
+    this.gaze.on('changed', function(filepath) {
+        if (self.debug)
+            console.log('Got gaze changed: "%s"', filepath);
+
+        var relativeFilename = path.relative(self.srcPath, filepath);
+        console.log('File changed', relativeFilename);
+        if (self.lastModified[relativeFilename] &&
+            Date.now() - self.lastModified[relativeFilename] < (self.watchInterval + 200))
+                return console.log('Not recompiling %s'.yellow, relativeFilename);
 
         self.recompileFile(relativeFilename);
     });
