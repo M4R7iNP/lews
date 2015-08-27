@@ -30,6 +30,7 @@ var Lews = function(srcPath, destPath, options) {
 
     this.importMap = {};
     this.lastModified = {};
+    this.queue = async.queue(this.worker.bind(this), 2);
 
     var self = this;
 
@@ -129,10 +130,7 @@ Lews.prototype.watch = function() {
     });
 };
 
-Lews.prototype.recompileFile = function(relativeFilename, callback) {
-    if (!callback)
-        callback = function() { console.log('Done with', relativeFilename); };
-
+Lews.prototype.recompileFile = function(relativeFilename) {
     var self = this;
 
     var files = [];
@@ -150,85 +148,79 @@ Lews.prototype.recompileFile = function(relativeFilename, callback) {
     if (relativeFilename.match(/\.less/))
         files.unshift(relativeFilename);
 
-    if(!files.length)
-        return callback();
+    files.forEach(function(file) {
+        for (var i = 0; i < self.queue.tasks.length; i++)
+            if (self.queue.tasks[i].data == file)
+                return;
 
-    async.eachLimit(
-        files,
-        2,
-        function(lessFilename, cb) {
-            var inFile = path.join(self.srcPath, lessFilename),
-                outFile = path.join(self.destPath, lessFilename.replace(/\.less$/, '.css'));
+        self.queue.push(file);
+    });
+};
 
-            if (self.debug)
-                console.log('Began to recompile', inFile);
+Lews.prototype.worker = function(lessFilename, cb) {
+    var self = this,
+        inFile = path.join(self.srcPath, lessFilename),
+        outFile = path.join(self.destPath, lessFilename.replace(/\.less$/, '.css'));
 
-            fs.readFile(inFile, 'utf8', function(err, data) {
-                if (err)
-                    return cb(err);
+    if (self.debug)
+        console.log('Started', inFile);
 
-                var inFileDir = path.dirname(inFile);
+    fs.readFile(inFile, 'utf8', function(err, data) {
+        if (err)
+            return cb(err);
 
-                var lessOptions = {
-                    compress: true,
-                    rootFileInfo: {
-                        filename: path.basename(inFile),
-                        rootpath: self.srcPath,
-                        currentDirectory: inFileDir,
-                        entryPath: inFileDir,
-                        rootFilename: path.basename(relativeFilename),
-                    },
-                    paths: [path.dirname(inFile)],
-                    plugins: self.options.lessPlugins,
-                    sourceMap: {
-                        sourceMapFileInline: !self.options.noSourceMap
-                    }
-                };
+        var inFileDir = path.dirname(inFile);
 
-                less.render(data, lessOptions, function(err, result) {
-                    console.log((lessFilename)[err ? 'red' : 'green']);
-                    if (err) {
-                        console.error('Error'.red, err.filename + ':', err.message);
-                        if (self.options.aetherDebugBarError) {
-                            self.lastModified[lessFilename] = Date.now();
-                            fs.writeFile(outFile, generateAetherDebugBarError(err), cb);
-                        }
-                        else
-                            cb(err);
-                        return;
-                    }
+        var lessOptions = {
+            rootFileInfo: {
+                filename: path.basename(inFile),
+                rootpath: self.srcPath,
+                currentDirectory: inFileDir,
+                entryPath: inFileDir,
+                rootFilename: path.basename(inFile),
+            },
+            paths: [path.dirname(inFile)],
+            sourceMap: {
+                sourceMapFileInline: !self.options.noSourceMap
+            }
+        };
 
-                    // Update imports
-                    result.imports.forEach(function(importFilename) {
-                        var relativeImportFilename =
-                            path.relative(
-                                self.srcPath,
-                                path.resolve(path.dirname(inFile), importFilename)
-                            );
+        less.render(data, lessOptions, function(err, result) {
+            console.log((lessFilename)[err ? 'red' : 'green']);
+            if (err) {
+                console.error('Error'.red, err.filename + ':', err.message);
+                if (self.options.aetherDebugBarError) {
+                    self.lastModified[lessFilename] = Date.now();
+                    fs.writeFile(outFile, generateAetherDebugBarError(err), cb);
+                }
+                else
+                    cb(err);
+                return;
+            }
 
-                        if (!self.importMap[relativeImportFilename])
-                            self.importMap[relativeImportFilename] = [lessFilename];
-                        else if(self.importMap[relativeImportFilename].indexOf(lessFilename) === -1)
-                            self.importMap[relativeImportFilename].push(lessFilename);
-                    });
+            // Update imports
+            result.imports.forEach(function(importFilename) {
+                var relativeImportFilename =
+                    path.relative(
+                        self.srcPath,
+                        path.resolve(path.dirname(inFile), importFilename)
+                    );
 
-                    fs.writeFile(outFile, result.css, function(err) {
-                        self.lastModified[lessFilename] = Date.now();
-                        if (err && err.code == 'ENOENT') // Directory does not exist
-                            require('mkdirp')(path.dirname(outFile),  fs.writeFile.bind(this, outFile, result.css, cb));
-                        else
-                            cb(err);
-                    });
-                });
+                if (!self.importMap[relativeImportFilename])
+                    self.importMap[relativeImportFilename] = [lessFilename];
+                else if(self.importMap[relativeImportFilename].indexOf(lessFilename) === -1)
+                    self.importMap[relativeImportFilename].push(lessFilename);
             });
-        },
-        function(err) {
-            if (err)
-                console.error(err);
 
-            callback();
-        }
-    );
+            fs.writeFile(outFile, result.css, function(err) {
+                self.lastModified[lessFilename] = Date.now();
+                if (err && err.code == 'ENOENT') // Directory does not exist
+                    require('mkdirp')(path.dirname(outFile),  fs.writeFile.bind(this, outFile, result.css, cb));
+                else
+                    cb(err);
+            });
+        });
+    });
 };
 
 Lews.prototype.gulpWatchCb = function(event) {
