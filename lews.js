@@ -10,6 +10,8 @@
 
 var glob = require('glob'),
     async = require('async'),
+    flatten = require('flatten'),
+    unique = require('array-unique'),
     fs = require('fs'),
     path = require('path'),
     colors = require('colors'),
@@ -23,6 +25,7 @@ var Lews = function(srcPath, destPath, options) {
     this.destPath = path.resolve(destPath);
     this.debug = !!options.debug;
     this.watchInterval = options.watchInterval || 1000;
+    this.filenameFilter = options.filenameFilter;
 
     this.options = options || {
         aetherDebugBarError: true
@@ -31,10 +34,13 @@ var Lews = function(srcPath, destPath, options) {
     this.importMap = {};
     this.lastModified = {};
     this.queue = async.queue(this.worker.bind(this), 2);
+};
 
+Lews.prototype.buildImportMap = function(cb) {
     var self = this;
 
-    console.log('Lews: Building initial import map');
+    if (this.debug)
+        console.log('Lews: Building initial import map');
 
     // Create initial import map
     glob(
@@ -56,10 +62,13 @@ var Lews = function(srcPath, destPath, options) {
                         process.exit(1);
                     }
 
-                    if (self.debug)
+                    if (self.debug) {
                         console.log(self.importMap);
+                        console.log('Lews: Import map is built');
+                    }
 
-                    console.log('Lews: Import map is built');
+                    if (typeof cb == 'function')
+                        cb();
                 }
             );
         }
@@ -130,31 +139,44 @@ Lews.prototype.watch = function() {
     });
 };
 
-Lews.prototype.recompileFile = function(relativeFilename) {
-    var self = this;
-
+Lews.prototype.getImports = function(relativeFilename) {
     var files = [];
     if(this.importMap[relativeFilename])
         files = files.concat(this.importMap[relativeFilename]);
 
     // Add files that imports added files recursively
     for (var i = 0; i < files.length; i++)
-        if (this.importMap[files[i]])
-            for (var j = 0, file = this.importMap[files[i]][j]; j < this.importMap[files[i]].length; file = this.importMap[files[i]][++j])
-                if (file && files.indexOf(file) === -1)
-                    files.push(file);
+    {
+        if (!this.importMap[files[i]])
+            continue;
 
-    // Add current file if its less
-    if (relativeFilename.match(/\.less/))
+        for (var j = 0, file = this.importMap[files[i]][j];
+            j < this.importMap[files[i]].length;
+            file = this.importMap[files[i]][++j])
+        {
+            if (file && files.indexOf(file) === -1)
+            {
+                files.push(file);
+            }
+        }
+    }
+
+    // Add current file if it's less
+    if (/\.less$/.test(relativeFilename))
         files.unshift(relativeFilename);
 
-    files.forEach(function(file) {
-        for (var i = 0; i < self.queue.tasks.length; i++)
-            if (self.queue.tasks[i].data == file)
-                return;
+    if (this.filenameFilter)
+        files = files.filter(file => this.filenameFilter.test(file));
 
-        self.queue.push(file);
-    });
+    return files;
+};
+
+Lews.prototype.recompileFile = function(relativeFilename) {
+    return this.recompileFiles([relativeFilename]);
+};
+Lews.prototype.recompileFiles = function(files) {
+    var filesToRecompile = unique(flatten(files.map(file => this.getImports(file))));
+    filesToRecompile.forEach(file => this.queue.push(file));
 };
 
 Lews.prototype.worker = function(lessFilename, cb) {

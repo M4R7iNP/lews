@@ -7,11 +7,13 @@
     "lews": "./bin.js"
   },
   "dependencies": {
-    "async": "^1.2.1",
-    "chokidar": "^1.0.3",
-    "colors": "^1.0.3",
+    "array-unique": "^0.3.2",
+    "async": "^2.0.1",
+    "chokidar": "^1.6.0",
+    "colors": "^1.1.2",
+    "flatten": "^1.0.2",
     "glob": "^5.0.12",
-    "less": "^2.5.1",
+    "less": "^2.7.1",
     "mkdirp": "^0.5.1"
   },
   "devDependencies": {},

@@ -53,6 +53,12 @@ for (var i = 2; i < process.argv.length; i++) {
         } catch (err) {
         }
         break;
+    case 'use-stdin':
+        programOptions.useStdin = true;
+        break;
+    case 'only-bundles':
+        lewsOptions.filenameFilter = /bundle\.less$/;
+        break;
     case 'watch-interval':
         lewsOptions.watchInterval = parseInt(process.argv[++i]);
         break;
@@ -75,7 +81,18 @@ if (!programOptions.dstPath)
     programOptions.dstPath = programOptions.srcPath;
 
 var lews = new Lews(programOptions.srcPath, programOptions.dstPath, lewsOptions);
-if (!programOptions.noWatch)
-    lews.watch();
-if (programOptions.useSocket)
-    lews.createSocket(programOptions.socketPath);
+lews.buildImportMap(function() {
+    if (!programOptions.noWatch)
+        lews.watch();
+    if (programOptions.useSocket)
+        lews.createSocket(programOptions.socketPath);
+
+    if (programOptions.useStdin) {
+        var stdinText = '';
+        process.stdin.setEncoding('utf-8');
+        process.stdin.on('data', chunk => stdinText += chunk);
+        process.stdin.on('end', function() {
+            lews.recompileFiles(stdinText.split('\n'));
+        });
+    }
+});
